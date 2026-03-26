@@ -1,0 +1,3 @@
+# Config
+
+Chứa các cấu hình hệ thống: DB, Security, Transaction...

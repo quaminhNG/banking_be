@@ -1,0 +1,3 @@
+# Exception
+
+Chứa các class xử lý ngoại lệ toàn cục: GlobalExceptionHandler, Custom Exceptions...
