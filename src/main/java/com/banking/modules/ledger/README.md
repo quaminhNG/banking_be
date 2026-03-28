@@ -1,3 +1,10 @@
-# Ledger Module
+# Ledger Module (CORE)
 
-Sổ cái trung tâm (Source of Truth). Ghi nhận nhật ký tài chính. CORE NHẤT!
+Source of truth của hệ thống:
+
+- Lưu toàn bộ biến động tiền
+- Chỉ INSERT (append-only)
+
+Không update dữ liệu.
+
+Mọi module liên quan tiền phải đi qua đây.

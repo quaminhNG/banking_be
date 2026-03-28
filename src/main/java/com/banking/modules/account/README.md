@@ -1,3 +1,10 @@
 # Account Module
 
-Module quản lý tài khoản người dùng, bao gồm số dư, thông tin cơ bản.
+Quản lý tài khoản:
+
+- Tạo account
+- Trạng thái account (ACTIVE, LOCKED)
+
+Không xử lý tiền.
+
+Chỉ đóng vai trò định danh.

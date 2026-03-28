@@ -1,3 +1,9 @@
-# Exception
+# Exception Layer
 
-Chứa các class xử lý ngoại lệ toàn cục: GlobalExceptionHandler, Custom Exceptions...
+Quản lý lỗi toàn hệ thống:
+
+- GlobalExceptionHandler: bắt lỗi global
+- BusinessException: lỗi nghiệp vụ
+- ErrorCode: định nghĩa mã lỗi
+
+Giúp chuẩn hóa error response.

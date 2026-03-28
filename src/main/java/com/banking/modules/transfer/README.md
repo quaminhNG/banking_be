@@ -1,3 +1,11 @@
 # Transfer Module
 
-Module nghiệp vụ trung tâm cho việc chuyển tiền, cầu nối giữa các module.
+Xử lý chuyển tiền:
+
+- A → B
+- Double-entry (DEBIT / CREDIT)
+
+Logic:
+- Trừ A
+- Cộng B
+- Atomic transaction
