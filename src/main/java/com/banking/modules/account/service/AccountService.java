@@ -30,7 +30,7 @@ public class AccountService {
         accountRepository.save(account);
 
         ledgerService.createInitialEntry(accountId, request.getAmount());
-        auditService.createAuditLog(accountId);
+        auditService.createAuditLog(UUID.randomUUID().toString(), accountId, "CREATE_ACCOUNT", "{}");
 
     }
 }

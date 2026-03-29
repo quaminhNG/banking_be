@@ -12,11 +12,13 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class AuditService {
     final private AuditRepository auditRepository;
-    public void createAuditLog(String accountId){
+    public void createAuditLog(String requestId, String userId, String action, String metadata){
         AuditLog auditLog = new AuditLog();
         auditLog.setId(UUID.randomUUID().toString());
-        auditLog.setAccountId(accountId);
-        auditLog.setAction("CREATED ACCOUNT");
+        auditLog.setRequestId(requestId);
+        auditLog.setUserId(userId);
+        auditLog.setAction(action);
+        auditLog.setMetadata(metadata);
         auditLog.setCreatedAt(LocalDateTime.now());
         auditRepository.save(auditLog);
     }

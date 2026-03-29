@@ -8,5 +8,5 @@ import java.util.List;
 
 @Repository
 public interface AuditRepository extends JpaRepository<AuditLog, String> {
-    List<AuditLog> findByAccountId(String accountId);
+    List<AuditLog> findByUserId(String userId);
 }
