@@ -1,17 +1,30 @@
-node_modules/
-vendor/
-.env
+# IDEs
 .idea/
 .vscode/
-*.log
-dist/
-build/
+*.iml
+*.iws
+*.ipr
+out/
+
+# Build and Compilation
 target/
+build/
+bin/
 *.class
 *.jar
 *.war
 *.ear
-.settings/
-.project
-.classpath
-bin/
+
+# Logs and Temps
+node_modules/
+vendor/
+.env
+*.log
+tmp/
+
+# Project Specific Docs
+doc.txt
+
+# OS files
+.DS_Store
+Thumbs.db
