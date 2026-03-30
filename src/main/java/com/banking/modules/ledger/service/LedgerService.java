@@ -43,23 +43,51 @@ public class LedgerService {
 
     @Transactional
     public void deposit(BalanceSnapshotRequest request) {
-        String accountId = request.getAccountId();
-        BigDecimal amount = request.getAmount();
+        deposit(request.getAccountId(), request.getAmount(), "DEPOSIT_API");
+    }
 
+    @Transactional
+    public void deposit(String accountId, BigDecimal amount, String referenceId) {
         LedgerEntry entry = new LedgerEntry();
         entry.setId(UUID.randomUUID().toString());
         entry.setAccountId(accountId);
         entry.setType(LedgerType.CREDIT);
         entry.setAmount(amount);
         entry.setCurrency("VND");
-        entry.setReferenceId("DEPOSIT_API");
+        entry.setReferenceId(referenceId);
         entry.setCreatedAt(LocalDateTime.now());
         ledgerRepository.save(entry);
 
         BalanceSnapshot balanceSnapshot = balanceSnapshotRepository.findByIdForUpdate(accountId)
-                .orElseThrow(() -> new RuntimeException("Tài khoản chưa được khởi tạo số dư!"));
+                .orElseThrow(() -> new RuntimeException("The account has not been initialized with a balance!"));
 
         BigDecimal newBalance = balanceSnapshot.getBalance().add(amount);
+        balanceSnapshot.setBalance(newBalance);
+        balanceSnapshot.setUpdatedAt(LocalDateTime.now());
+        balanceSnapshotRepository.save(balanceSnapshot);
+    }
+
+    @Transactional
+    public void withdraw(BalanceSnapshotRequest request) {
+        withdraw(request.getAccountId(), request.getAmount(), "WITHDRAW_API");
+    }
+
+    @Transactional
+    public void withdraw(String accountId, BigDecimal amount, String referenceId) {
+        LedgerEntry entry = new LedgerEntry();
+        entry.setId(UUID.randomUUID().toString());
+        entry.setAccountId(accountId);
+        entry.setType(LedgerType.DEBIT);
+        entry.setAmount(amount);
+        entry.setCurrency("VND");
+        entry.setReferenceId(referenceId);
+        entry.setCreatedAt(LocalDateTime.now());
+        ledgerRepository.save(entry);
+
+        BalanceSnapshot balanceSnapshot = balanceSnapshotRepository.findByIdForUpdate(accountId)
+                .orElseThrow(() -> new RuntimeException("The account has not been initialized with a balance!"));
+
+        BigDecimal newBalance = balanceSnapshot.getBalance().subtract(amount);
         balanceSnapshot.setBalance(newBalance);
         balanceSnapshot.setUpdatedAt(LocalDateTime.now());
         balanceSnapshotRepository.save(balanceSnapshot);

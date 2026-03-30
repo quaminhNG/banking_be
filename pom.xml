@@ -14,8 +14,7 @@
 	<name>banking-backend</name>
 	<description>Banking Backend System</description>
 	<properties>
-		<java.version>21</java.version>
-	</properties>
+		<java.version>21</java.version> </properties>
 	<dependencies>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
@@ -34,6 +33,7 @@
 		<dependency>
 			<groupId>org.projectlombok</groupId>
 			<artifactId>lombok</artifactId>
+			<version>1.18.36</version>
 			<optional>true</optional>
 		</dependency>
 		<dependency>

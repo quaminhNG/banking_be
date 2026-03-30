@@ -1,8 +1,10 @@
 # Transaction Module
 
-Quản lý request tài chính:
+Quản lý luồng giao dịch tài chính:
 
-- Idempotency (chống double request)
-- Tracking trạng thái (SUCCESS, FAILED)
+- **Deposit**: Nạp tiền vào tài khoản.
+- **Withdraw**: Rút tiền từ tài khoản.
+- **Idempotency**: Chống xử lý trùng lặp request.
+- **Status Tracking**: Theo dõi trạng thái (PENDING, SUCCESS, FAILED).
 
-Không giữ tiền, chỉ kiểm soát request.
+Module này không trực tiếp cộng/trừ tiền mà gọi xuống **Ledger Module** sau khi kiểm soát request thành công.
