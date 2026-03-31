@@ -8,5 +8,6 @@ import lombok.AllArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class CreateAccountResponse {
+    private String accountId;
     private String message;
 }

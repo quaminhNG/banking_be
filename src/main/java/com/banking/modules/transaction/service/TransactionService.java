@@ -1,5 +1,6 @@
 package com.banking.modules.transaction.service;
 
+import com.banking.common.constants.TransactionConstants;
 import com.banking.modules.ledger.service.LedgerService;
 import com.banking.modules.transaction.dto.request.TransactionRequest;
 import com.banking.modules.transaction.dto.response.TransactionResponse;
@@ -45,7 +46,7 @@ public class TransactionService {
         transaction.setAccountId(request.getAccountId());
         transaction.setAmount(request.getAmount());
         transaction.setType(type);
-        transaction.setCurrency("VND");
+        transaction.setCurrency(TransactionConstants.CURRENCY_VND);
         transaction.setStatus(TransactionStatus.PENDING);
         transaction.setIdempotencyKey(request.getIdempotencyKey());
         transaction.setCreatedAt(LocalDateTime.now());

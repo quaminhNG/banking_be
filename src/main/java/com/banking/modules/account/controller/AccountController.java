@@ -16,7 +16,7 @@ public class AccountController {
     private final AccountService accountService;
     @PostMapping
     public ResponseEntity<CreateAccountResponse> createAccount(@RequestBody CreateAccountRequest request) {
-        accountService.createAccount(request);
-        return ResponseEntity.ok(new CreateAccountResponse("Account created successfully"));
+        String accountId = accountService.createAccount(request);
+        return ResponseEntity.ok(new CreateAccountResponse(accountId, "Account created successfully"));
     }
 }

@@ -1,5 +1,6 @@
 package com.banking.modules.account.service;
 
+import com.banking.common.constants.AuditConstants;
 import com.banking.modules.account.dto.request.CreateAccountRequest;
 import com.banking.modules.account.entity.Account;
 import com.banking.modules.account.entity.AccountStatus;
@@ -20,7 +21,7 @@ public class AccountService {
     private final AuditService auditService;
 
     @Transactional
-    public void createAccount(CreateAccountRequest request) {
+    public String createAccount(CreateAccountRequest request) {
         String accountId = UUID.randomUUID().toString();
 
         Account account = new Account();
@@ -30,7 +31,7 @@ public class AccountService {
         accountRepository.save(account);
 
         ledgerService.createInitialEntry(accountId, request.getAmount());
-        auditService.createAuditLog(UUID.randomUUID().toString(), accountId, "CREATE_ACCOUNT", "{}");
-
+        auditService.createAuditLog(UUID.randomUUID().toString(), accountId, AuditConstants.CREATE_ACCOUNT, "{}");
+        return accountId;
     }
 }
