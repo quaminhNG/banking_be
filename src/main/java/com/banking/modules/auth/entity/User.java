@@ -10,7 +10,7 @@ import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "users", indexes = {
-    @Index(name = "idx_users_username", columnList = "username", unique = true)
+        @Index(name = "idx_users_username", columnList = "username", unique = true)
 })
 @Data
 @NoArgsConstructor
@@ -31,7 +31,7 @@ public class User {
     @Column(nullable = false)
     private UserRole role;
 
-    // 1 user = 1 account (Option A)
+    // 1 user = 1 account
     @Column(name = "account_id", unique = true)
     private String accountId;
 
