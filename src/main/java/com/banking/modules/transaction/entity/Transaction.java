@@ -9,7 +9,7 @@ import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "transactions", indexes = {
-    @Index(name = "idx_idempotency_key", columnList = "idempotency_key", unique = true)
+        @Index(name = "idx_idempotency_key", columnList = "idempotency_key", unique = true)
 })
 @Data
 @NoArgsConstructor
@@ -18,8 +18,14 @@ public class Transaction {
     @Id
     private String id;
 
-    @Column(name = "account_id", nullable = false)
+    @Column(name = "account_id")
     private String accountId;
+
+    @Column(name = "from_account_id")
+    private String fromAccountId;
+
+    @Column(name = "to_account_id")
+    private String toAccountId;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
@@ -34,6 +40,9 @@ public class Transaction {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private TransactionStatus status;
+
+    @Column(name = "request_hash", length = 64)
+    private String requestHash;
 
     @Column(name = "idempotency_key", unique = true)
     private String idempotencyKey;

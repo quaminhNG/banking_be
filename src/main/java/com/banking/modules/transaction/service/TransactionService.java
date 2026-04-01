@@ -8,6 +8,7 @@ import com.banking.modules.transaction.entity.Transaction;
 import com.banking.modules.transaction.entity.TransactionStatus;
 import com.banking.modules.transaction.entity.TransactionType;
 import com.banking.modules.transaction.repository.TransactionRepository;
+import com.banking.security.SecurityUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,6 +22,7 @@ import java.util.UUID;
 public class TransactionService {
     private final TransactionRepository transactionRepository;
     private final LedgerService ledgerService;
+    private final SecurityUtils securityUtils;
 
     @Transactional
     public TransactionResponse processDeposit(TransactionRequest request) {
@@ -33,7 +35,8 @@ public class TransactionService {
     }
 
     private TransactionResponse processTransaction(TransactionRequest request, TransactionType type) {
-        // Idempotency check dup
+        // Chỉ cho phép thao tác trên account của chính mình
+        securityUtils.verifyAccountOwnership(request.getAccountId());
         if (request.getIdempotencyKey() != null) {
             Optional<Transaction> existing = transactionRepository.findByIdempotencyKey(request.getIdempotencyKey());
             if (existing.isPresent()) {
@@ -54,25 +57,17 @@ public class TransactionService {
 
         transactionRepository.save(transaction);
 
-        try {
-            if (type == TransactionType.DEPOSIT) {
-                ledgerService.deposit(transaction.getAccountId(), transaction.getAmount(), transaction.getId());
-            } else if (type == TransactionType.WITHDRAW) {
-                ledgerService.withdraw(transaction.getAccountId(), transaction.getAmount(), transaction.getId());
-            }
-
-            transaction.setStatus(TransactionStatus.SUCCESS);
-            transaction.setUpdatedAt(LocalDateTime.now());
-            transactionRepository.save(transaction);
-
-            return mapToResponse(transaction, "Transaction successful.");
-        } catch (Exception e) {
-            transaction.setStatus(TransactionStatus.FAILED);
-            transaction.setUpdatedAt(LocalDateTime.now());
-            transactionRepository.save(transaction);
-
-            return mapToResponse(transaction, "Transaction failed: " + e.getMessage());
+        if (type == TransactionType.DEPOSIT) {
+            ledgerService.deposit(transaction.getAccountId(), transaction.getAmount(), transaction.getId());
+        } else if (type == TransactionType.WITHDRAW) {
+            ledgerService.withdraw(transaction.getAccountId(), transaction.getAmount(), transaction.getId());
         }
+
+        transaction.setStatus(TransactionStatus.SUCCESS);
+        transaction.setUpdatedAt(LocalDateTime.now());
+        transactionRepository.save(transaction);
+
+        return mapToResponse(transaction, "Transaction successful.");
     }
 
     private TransactionResponse mapToResponse(Transaction transaction, String message) {

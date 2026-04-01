@@ -10,9 +10,11 @@ import com.banking.modules.ledger.entity.LedgerEntry;
 import com.banking.modules.ledger.entity.LedgerType;
 import com.banking.modules.ledger.repository.BalanceSnapshotRepository;
 import com.banking.modules.ledger.repository.LedgerRepository;
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -90,6 +92,41 @@ public class LedgerService {
         balanceSnapshotRepository.save(balanceSnapshot);
     }
 
+    /**
+     * Ghi sổ cái cho lệnh chuyển tiền.
+     * Lock 2 tài khoản theo thứ tự alphabetical để tránh deadlock.
+     * Được gọi bởi TransferService sau khi đã tạo Transaction.
+     */
+    public void transferLedger(String fromId, String toId, BigDecimal amount, String transactionId) {
+        String firstId = fromId.compareTo(toId) < 0 ? fromId : toId;
+        String secondId = fromId.compareTo(toId) < 0 ? toId : fromId;
+        // Pessimistic lock account 1 trước -> sau đó đến account 2
+        BalanceSnapshot firstSnapshot = balanceSnapshotRepository.findByIdForUpdate(firstId)
+                .orElseThrow(() -> new BankingException("Account not initialized: " + firstId));
+        BalanceSnapshot secondSnapshot = balanceSnapshotRepository.findByIdForUpdate(secondId)
+                .orElseThrow(() -> new BankingException("Account not initialized: " + secondId));
+
+        BalanceSnapshot fromSnapshot = firstId.equals(fromId) ? firstSnapshot : secondSnapshot;
+        BalanceSnapshot toSnapshot = firstId.equals(toId) ? firstSnapshot : secondSnapshot;
+
+        if (fromSnapshot.getBalance().compareTo(amount) < 0) {
+            throw new BankingException("Insufficient balance");
+        }
+
+        saveLedgerEntry(fromId, LedgerType.DEBIT, amount, transactionId);
+        saveLedgerEntry(toId, LedgerType.CREDIT, amount, transactionId);
+
+        fromSnapshot.setBalance(fromSnapshot.getBalance().subtract(amount));
+        toSnapshot.setBalance(toSnapshot.getBalance().add(amount));
+
+        fromSnapshot.setUpdatedAt(LocalDateTime.now());
+        toSnapshot.setUpdatedAt(LocalDateTime.now());
+
+        balanceSnapshotRepository.save(fromSnapshot);
+        balanceSnapshotRepository.save(toSnapshot);
+    }
+
+    // helper
     private void saveLedgerEntry(String accountId, LedgerType type, BigDecimal amount, String referenceId) {
         LedgerEntry entry = new LedgerEntry();
         entry.setId(UUID.randomUUID().toString());
