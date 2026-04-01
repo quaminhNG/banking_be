@@ -28,11 +28,19 @@ public class TransactionService {
 
     @Transactional
     public TransactionResponse processDeposit(TransactionRequest request) {
+        Optional<Transaction> existing = transactionRepository.findByIdempotencyKey(request.getIdempotencyKey());
+        if (existing.isPresent()) {
+            return mapToResponse(existing.get(), "Transaction already processed (Idempotent)");
+        }
         return processTransaction(request, TransactionType.DEPOSIT);
     }
 
     @Transactional
     public TransactionResponse processWithdraw(TransactionRequest request) {
+        Optional<Transaction> existing = transactionRepository.findByIdempotencyKey(request.getIdempotencyKey());
+        if (existing.isPresent()) {
+            return mapToResponse(existing.get(), "Transaction already processed (Idempotent)");
+        }
         return processTransaction(request, TransactionType.WITHDRAW);
     }
 
@@ -72,11 +80,10 @@ public class TransactionService {
         // Audit Logging
         String userId = securityUtils.getCurrentUser().getId();
         auditService.createAuditLog(
-            transaction.getId(), 
-            userId, 
-            type.name(), 
-            "{\"amount\":" + transaction.getAmount() + ",\"accountId\":\"" + transaction.getAccountId() + "\"}"
-        );
+                transaction.getId(),
+                userId,
+                type.name(),
+                "{\"amount\":" + transaction.getAmount() + ",\"accountId\":\"" + transaction.getAccountId() + "\"}");
 
         return mapToResponse(transaction, "Transaction successful.");
     }

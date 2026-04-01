@@ -9,7 +9,9 @@ import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "transactions", indexes = {
-        @Index(name = "idx_idempotency_key", columnList = "idempotency_key", unique = true)
+        @Index(name = "idx_tx_idempotency", columnList = "idempotency_key", unique = true),
+        @Index(name = "idx_tx_from_acc", columnList = "from_account_id"),
+        @Index(name = "idx_tx_to_acc", columnList = "to_account_id")
 })
 @Data
 @NoArgsConstructor

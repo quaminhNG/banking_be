@@ -17,10 +17,16 @@ import org.springframework.web.bind.annotation.RestController;
 public class TransferController {
 
     private final TransferService transferService;
+    private final com.banking.modules.transfer.service.ExternalTransferService externalTransferService;
 
     @PostMapping
     public ResponseEntity<TransferResponse> transfer(@Valid @RequestBody TransferRequest request) {
-        TransferResponse response = transferService.transfer(request);
+        TransferResponse response;
+        if (request.getToBankCode() != null && !request.getToBankCode().isEmpty()) {
+            response = externalTransferService.transferToExternal(request);
+        } else {
+            response = transferService.transfer(request);
+        }
         return ResponseEntity.ok(response);
     }
 }
