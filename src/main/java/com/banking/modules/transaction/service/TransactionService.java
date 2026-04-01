@@ -9,6 +9,7 @@ import com.banking.modules.transaction.entity.TransactionStatus;
 import com.banking.modules.transaction.entity.TransactionType;
 import com.banking.modules.transaction.repository.TransactionRepository;
 import com.banking.security.SecurityUtils;
+import com.banking.modules.audit.service.AuditService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,6 +24,7 @@ public class TransactionService {
     private final TransactionRepository transactionRepository;
     private final LedgerService ledgerService;
     private final SecurityUtils securityUtils;
+    private final AuditService auditService;
 
     @Transactional
     public TransactionResponse processDeposit(TransactionRequest request) {
@@ -66,6 +68,15 @@ public class TransactionService {
         transaction.setStatus(TransactionStatus.SUCCESS);
         transaction.setUpdatedAt(LocalDateTime.now());
         transactionRepository.save(transaction);
+
+        // Audit Logging
+        String userId = securityUtils.getCurrentUser().getId();
+        auditService.createAuditLog(
+            transaction.getId(), 
+            userId, 
+            type.name(), 
+            "{\"amount\":" + transaction.getAmount() + ",\"accountId\":\"" + transaction.getAccountId() + "\"}"
+        );
 
         return mapToResponse(transaction, "Transaction successful.");
     }

@@ -3,6 +3,7 @@ package com.banking.modules.auth.service;
 import com.banking.exception.BankingException;
 import com.banking.modules.account.dto.request.CreateAccountRequest;
 import com.banking.modules.account.service.AccountService;
+import com.banking.modules.audit.service.AuditService;
 import com.banking.modules.auth.dto.request.LoginRequest;
 import com.banking.modules.auth.dto.request.RegisterRequest;
 import com.banking.modules.auth.dto.response.AuthResponse;
@@ -26,6 +27,7 @@ public class AuthService {
     private final AccountService accountService;
     private final JwtService jwtService;
     private final PasswordEncoder passwordEncoder;
+    private final AuditService auditService;
 
     @Transactional
     public AuthResponse register(RegisterRequest request) {
@@ -33,7 +35,6 @@ public class AuthService {
             throw new BankingException("Username already exists");
         }
 
-        // Tạo account cho user mới (balance = 0)
         String accountId = accountService.createAccount(new CreateAccountRequest(null));
 
         User user = User.builder()
@@ -47,6 +48,8 @@ public class AuthService {
 
         userRepository.save(user);
 
+        auditService.createAuditLog(null, user.getId(), "REGISTER", "{\"accountId\":\"" + accountId + "\"}");
+
         String token = jwtService.generateToken(user.getUsername(), user.getRole().name());
         return new AuthResponse(token, user.getUsername(), user.getRole().name(), accountId);
     }
@@ -56,8 +59,11 @@ public class AuthService {
                 .orElseThrow(() -> new BankingException("Invalid username or password"));
 
         if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
+            auditService.createAuditLog(null, user.getId(), "LOGIN_FAILED", "{\"username\":\"" + request.getUsername() + "\"}");
             throw new BankingException("Invalid username or password");
         }
+
+        auditService.createAuditLog(null, user.getId(), "LOGIN_SUCCESS", null);
 
         String token = jwtService.generateToken(user.getUsername(), user.getRole().name());
         return new AuthResponse(token, user.getUsername(), user.getRole().name(), user.getAccountId());

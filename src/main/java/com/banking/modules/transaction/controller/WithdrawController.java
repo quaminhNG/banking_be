@@ -3,6 +3,7 @@ package com.banking.modules.transaction.controller;
 import com.banking.modules.transaction.dto.request.TransactionRequest;
 import com.banking.modules.transaction.dto.response.TransactionResponse;
 import com.banking.modules.transaction.service.TransactionService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -17,7 +18,7 @@ public class WithdrawController {
     private final TransactionService transactionService;
 
     @PostMapping
-    public ResponseEntity<TransactionResponse> withdraw(@RequestBody TransactionRequest request) {
+    public ResponseEntity<TransactionResponse> withdraw(@Valid @RequestBody TransactionRequest request) {
         return ResponseEntity.ok(transactionService.processWithdraw(request));
     }
 }

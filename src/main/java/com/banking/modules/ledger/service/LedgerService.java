@@ -3,6 +3,8 @@ package com.banking.modules.ledger.service;
 import com.banking.common.constants.LedgerConstants;
 import com.banking.common.constants.TransactionConstants;
 import com.banking.exception.BankingException;
+import com.banking.modules.account.entity.Account;
+import com.banking.modules.account.entity.AccountStatus;
 import com.banking.modules.account.repository.AccountRepository;
 import com.banking.modules.ledger.dto.request.BalanceSnapshotRequest;
 import com.banking.modules.ledger.entity.BalanceSnapshot;
@@ -45,8 +47,7 @@ public class LedgerService {
 
     @Transactional
     public void deposit(BalanceSnapshotRequest request) {
-        accountRepository.findById(request.getAccountId())
-                .orElseThrow(() -> new BankingException("Account not found"));
+        verifyAccountActive(request.getAccountId());
         if (request.getAmount().compareTo(TransactionConstants.MIN_DEPOSIT) < 0) {
             throw new BankingException("The minimum deposit amount is " + TransactionConstants.MIN_DEPOSIT
                     + TransactionConstants.CURRENCY_VND);
@@ -66,8 +67,7 @@ public class LedgerService {
 
     @Transactional
     public void withdraw(BalanceSnapshotRequest request) {
-        accountRepository.findById(request.getAccountId())
-                .orElseThrow(() -> new BankingException("Account not found"));
+        verifyAccountActive(request.getAccountId());
         if (request.getAmount().compareTo(TransactionConstants.MIN_WITHDRAW) < 0) {
             throw new BankingException("The minimum withdrawal amount is " + TransactionConstants.MIN_WITHDRAW
                     + TransactionConstants.CURRENCY_VND);
@@ -98,6 +98,8 @@ public class LedgerService {
      * Được gọi bởi TransferService sau khi đã tạo Transaction.
      */
     public void transferLedger(String fromId, String toId, BigDecimal amount, String transactionId) {
+        verifyAccountActive(fromId);
+        verifyAccountActive(toId);
         String firstId = fromId.compareTo(toId) < 0 ? fromId : toId;
         String secondId = fromId.compareTo(toId) < 0 ? toId : fromId;
         // Pessimistic lock account 1 trước -> sau đó đến account 2
@@ -127,6 +129,14 @@ public class LedgerService {
     }
 
     // helper
+    private void verifyAccountActive(String accountId) {
+        Account account = accountRepository.findById(accountId)
+                .orElseThrow(() -> new BankingException("Account not found: " + accountId));
+        if (account.getStatus() != AccountStatus.ACTIVE) {
+            throw new BankingException("Account is not active: " + accountId);
+        }
+    }
+
     private void saveLedgerEntry(String accountId, LedgerType type, BigDecimal amount, String referenceId) {
         LedgerEntry entry = new LedgerEntry();
         entry.setId(UUID.randomUUID().toString());

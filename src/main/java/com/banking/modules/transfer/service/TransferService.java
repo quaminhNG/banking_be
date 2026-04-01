@@ -11,6 +11,7 @@ import com.banking.modules.transaction.repository.TransactionRepository;
 import com.banking.modules.transfer.dto.request.TransferRequest;
 import com.banking.modules.transfer.dto.response.TransferResponse;
 import com.banking.security.SecurityUtils;
+import com.banking.modules.audit.service.AuditService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -30,6 +31,7 @@ public class TransferService {
     private final TransactionRepository transactionRepository;
     private final LedgerService ledgerService;
     private final SecurityUtils securityUtils;
+    private final AuditService auditService;
 
     @Transactional
     public TransferResponse transfer(TransferRequest request) {
@@ -88,6 +90,15 @@ public class TransferService {
         transaction.setStatus(TransactionStatus.SUCCESS);
         transaction.setUpdatedAt(LocalDateTime.now());
         transactionRepository.save(transaction);
+
+        // Audit Logging
+        String userId = securityUtils.getCurrentUser().getId();
+        auditService.createAuditLog(
+            transaction.getId(),
+            userId,
+            "TRANSFER",
+            "{\"amount\":" + transaction.getAmount() + ",\"from\":\"" + request.getFromAccountId() + "\",\"to\":\"" + request.getToAccountId() + "\"}"
+        );
 
         return mapToResponse(transaction, "Transfer successful.");
     }
