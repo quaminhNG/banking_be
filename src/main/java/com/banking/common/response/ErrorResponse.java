@@ -1,14 +1,12 @@
 package com.banking.common.response;
 
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 
 @Data
-@Builder
 @AllArgsConstructor
 @NoArgsConstructor
 public class ErrorResponse {
@@ -16,6 +14,9 @@ public class ErrorResponse {
     private String error;
     private String message;
     private String path;
-    @Builder.Default
-    private LocalDateTime timestamp = LocalDateTime.now();
+    private LocalDateTime timestamp;
+
+    public static ErrorResponse build(int status, String error, String message, String path) {
+        return new ErrorResponse(status, error, message, path, LocalDateTime.now());
+    }
 }

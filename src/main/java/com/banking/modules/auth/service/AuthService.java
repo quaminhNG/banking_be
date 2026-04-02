@@ -37,14 +37,14 @@ public class AuthService {
 
         String accountId = accountService.createAccount(new CreateAccountRequest(null));
 
-        User user = User.builder()
-                .id(UUID.randomUUID().toString())
-                .username(request.getUsername())
-                .password(passwordEncoder.encode(request.getPassword()))
-                .role(UserRole.USER)
-                .accountId(accountId)
-                .createdAt(LocalDateTime.now())
-                .build();
+        User user = new User(
+                UUID.randomUUID().toString(),
+                request.getUsername(),
+                passwordEncoder.encode(request.getPassword()),
+                UserRole.USER,
+                accountId,
+                LocalDateTime.now()
+        );
 
         userRepository.save(user);
 

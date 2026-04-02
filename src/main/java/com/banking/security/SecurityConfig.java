@@ -1,9 +1,16 @@
 package com.banking.security;
 
+import com.banking.common.response.ErrorResponse;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -22,14 +29,43 @@ public class SecurityConfig {
     private final JwtFilter jwtFilter;
     private final RateLimitFilter rateLimitFilter;
 
+    private static final ObjectMapper MAPPER;
+    static {
+        MAPPER = new ObjectMapper();
+        MAPPER.registerModule(new JavaTimeModule());
+        MAPPER.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+    }
+
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
                 .csrf(csrf -> csrf.disable()) // vì dùng JWT nên k cần dùng csrf
                 .sessionManagement(sm -> sm
-                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS)) // JWT = stateless, để đảm bảo mỗi lần
-                                                                                 // có người truy cập phải kiểm tra
-                                                                                 // token
+                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS)) // JWT = stateless
+                .exceptionHandling(ex -> ex
+                        // 401 — Chưa đăng nhập hoặc token không hợp lệ
+                        .authenticationEntryPoint((request, response, authException) -> {
+                            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                            response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+                            ErrorResponse error = ErrorResponse.build(
+                                    HttpStatus.UNAUTHORIZED.value(),
+                                    HttpStatus.UNAUTHORIZED.getReasonPhrase(),
+                                    "Authentication required. Please provide a valid token.",
+                                    request.getRequestURI());
+                            response.getWriter().write(MAPPER.writeValueAsString(error));
+                        })
+                        // 403 — Đã đăng nhập nhưng không có quyền
+                        .accessDeniedHandler((request, response, accessDeniedException) -> {
+                            response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                            response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+                            ErrorResponse error = ErrorResponse.build(
+                                    HttpStatus.FORBIDDEN.value(),
+                                    HttpStatus.FORBIDDEN.getReasonPhrase(),
+                                    "Access denied. You do not have permission to access this resource.",
+                                    request.getRequestURI());
+                            response.getWriter().write(MAPPER.writeValueAsString(error));
+                        })
+                )
                 .authorizeHttpRequests(auth -> auth
                         // Public endpoints
                         .requestMatchers("/api/v1/auth/**").permitAll()
@@ -44,7 +80,7 @@ public class SecurityConfig {
     }
 
     @Bean
-    public PasswordEncoder passwordEncoder() { 
+    public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
 }

@@ -11,46 +11,31 @@ src/main/java/com/banking/
 │   ├── constants/
 │   ├── enums/
 │   ├── utils/
-│   └── response/
+│   └── response/ (Standardized API responses)
 
-├── exception/
+├── exception/ (Global centralized error handling)
 
-├── middleware/
+├── infrastructure/
+│   ├── persistence/
+│   ├── messaging/
+│   ├── cache/
+│   └── externalbank/ (CORE: Third-party Bank Integrations)
+│       ├── providers/ (VCB, TCB, MB, ACB, VP, BIDV, Vietin, Mock)
+│       ├── ExternalBankProvider.java (The Interface/Contract)
+│       └── ExternalBankManager.java (Adapter Factory)
 
 ├── modules/
-│   ├── account/
-│   │   ├── controller/
-│   │   ├── service/
-│   │   ├── repository/
-│   │   ├── entity/
-│   │   ├── dto/
-│   │   │   ├── request/
-│   │   │   └── response/
-│   │   └── mapper/
+│   ├── auth/ (JWT & Identity Management)
+│   ├── account/ (Internal Banking Accounts)
+│   ├── ledger/ (Internal Balance Management & Snapshots)
+│   ├── audit/ (Transaction Logs & Auditing)
+│   ├── transaction/ 
+│   │   ├── idempotency/ (Double-spend prevention)
+│   │   └── entity/ (Transaction History with DB Indexes)
 │   │
-│   ├── ledger/
-│   │   ├── controller/
-│   │   ├── service/
-│   │   ├── repository/
-│   │   ├── entity/
-│   │   └── domain/
-│   │
-│   ├── transaction/
-│   │   ├── controller/
-│   │   ├── service/
-│   │   ├── repository/
-│   │   ├── entity/
-│   │   └── idempotency/
-│   │
-│   └── transfer/
-│       ├── controller/
-│       ├── service/
-│       ├── repository/
-│       ├── entity/
-│       └── domain/
+│   └── transfer/ (Smart Routing System)
+│       ├── controller/ (Rerouting between internal/external)
+│       ├── service/ (TransferService & ExternalTransferService)
+│       └── dto/ (Unified Request/Response Models)
 
-└── infrastructure/
-    ├── persistence/
-    ├── messaging/
-    ├── cache/
-    └── external/
+└── README.md & ARCHITECTURE.md (Project Documentation)
