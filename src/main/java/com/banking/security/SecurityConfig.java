@@ -22,7 +22,8 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 
 @Configuration
 @EnableWebSecurity
-@EnableMethodSecurity // bật @PreAuthorize trên method
+@EnableMethodSecurity // bật @PreAuthorize vidu: @PreAuthorize("hasRole('ADMIN')") gắn trước hàm
+                      // xoaXXX(). nếu k có quyền ném 403
 @RequiredArgsConstructor
 public class SecurityConfig {
 
@@ -31,9 +32,10 @@ public class SecurityConfig {
 
     private static final ObjectMapper MAPPER;
     static {
-        MAPPER = new ObjectMapper();
-        MAPPER.registerModule(new JavaTimeModule());
-        MAPPER.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+        MAPPER = new ObjectMapper();// JSON to Object
+        MAPPER.registerModule(new JavaTimeModule());// nạp module thời gian
+        MAPPER.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS); // định dạng ISO-8601 ->
+                                                                        // 2026-04-02T11:13:00
     }
 
     @Bean
@@ -41,9 +43,15 @@ public class SecurityConfig {
         http
                 .csrf(csrf -> csrf.disable()) // vì dùng JWT nên k cần dùng csrf
                 .sessionManagement(sm -> sm
-                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS)) // JWT = stateless
+                                                .sessionCreationPolicy(SessionCreationPolicy.STATELESS)) // JWT =
+                                                                                                         // stateless k
+                                                                                                         // nhớ gì bắt
+                                                                                                         // buộc gửi
+                                                                                                         // token mới
+                                                                                                         // kèm theo khi
+                                                                                                         // gửi request
                 .exceptionHandling(ex -> ex
-                        // 401 — Chưa đăng nhập hoặc token không hợp lệ
+                                                // 401
                         .authenticationEntryPoint((request, response, authException) -> {
                             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
                             response.setContentType(MediaType.APPLICATION_JSON_VALUE);
@@ -54,7 +62,7 @@ public class SecurityConfig {
                                     request.getRequestURI());
                             response.getWriter().write(MAPPER.writeValueAsString(error));
                         })
-                        // 403 — Đã đăng nhập nhưng không có quyền
+                                                // 403
                         .accessDeniedHandler((request, response, accessDeniedException) -> {
                             response.setStatus(HttpServletResponse.SC_FORBIDDEN);
                             response.setContentType(MediaType.APPLICATION_JSON_VALUE);

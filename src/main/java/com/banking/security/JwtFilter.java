@@ -65,14 +65,17 @@ public class JwtFilter extends OncePerRequestFilter {
                 return;
             }
 
-            var auth = new UsernamePasswordAuthenticationToken(
+            var auth = new UsernamePasswordAuthenticationToken( // tạo thẻ thông hành dựa vào
+                                                                // UsernamePasswordAuthenticationToken của spring gồm 3
+                                                                // phần(username, null, list_role) null là pass nhưng đã
+                                                                // xác thực nên k cần pass nữa
                     username,
                     null,
                     List.of(new SimpleGrantedAuthority("ROLE_" + role)));
-            SecurityContextHolder.getContext().setAuthentication(auth);
+            SecurityContextHolder.getContext().setAuthentication(auth); // set quyền cho user
 
-        } catch (JwtException e) {
-            writeErrorResponse(response, request, "Invalid token");
+        } catch (JwtException e) { // nếu token hết hạn hoặc sai sẽ ném ra JwtException và rơi vào catch này
+            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Invalid token");
             return;
         }
 
