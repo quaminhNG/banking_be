@@ -24,6 +24,9 @@ tmp/
 
 # Project Specific Docs
 doc.txt
+output.md
+ARCHITECTURE.md
+test_api.py
 
 # OS files
 .DS_Store
