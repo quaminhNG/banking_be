@@ -60,15 +60,12 @@ public class TransferServiceTest {
 
     @Test
     void transfer_Success() {
-        // Arrange
         when(transactionRepository.findByIdempotencyKey(anyString())).thenReturn(Optional.empty());
         when(securityUtils.getCurrentUser()).thenReturn(mockUser);
         when(transactionRepository.save(any(Transaction.class))).thenAnswer(i -> i.getArguments()[0]);
 
-        // Act
         TransferResponse response = transferService.transfer(validRequest);
 
-        // Assert
         assertNotNull(response);
         assertEquals("ACC123", response.getFromAccountId());
         assertEquals("ACC456", response.getToAccountId());
@@ -78,10 +75,8 @@ public class TransferServiceTest {
 
     @Test
     void transfer_ToSelf_ShouldThrowException() {
-        // Arrange
-        validRequest.setToAccountId("ACC123"); // Chuyển cho chính mình
+        validRequest.setToAccountId("ACC123");
 
-        // Act & Assert
         BankingException exception = assertThrows(BankingException.class, () -> {
             transferService.transfer(validRequest);
         });
@@ -92,14 +87,11 @@ public class TransferServiceTest {
 
     @Test
     void transfer_InsufficientBalance_ShouldBubbleUpException() {
-        // Arrange
         when(transactionRepository.findByIdempotencyKey(anyString())).thenReturn(Optional.empty());
-        
-        // Giả lập LedgerService ném lỗi do không đủ tiền
-        doThrow(new BankingException("Insufficient balance"))
-            .when(ledgerService).transferLedger(anyString(), anyString(), any(BigDecimal.class), anyString());
 
-        // Act & Assert
+        doThrow(new BankingException("Insufficient balance"))
+                .when(ledgerService).transferLedger(anyString(), anyString(), any(BigDecimal.class), anyString());
+
         assertThrows(BankingException.class, () -> {
             transferService.transfer(validRequest);
         });
