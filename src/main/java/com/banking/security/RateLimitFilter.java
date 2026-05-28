@@ -25,6 +25,12 @@ public class RateLimitFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
 
+        // TẠM THỜI TẮT RATE LIMIT ĐỂ TEST
+        if (true) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
         String uri = request.getRequestURI();
         Bucket bucket = null;
 

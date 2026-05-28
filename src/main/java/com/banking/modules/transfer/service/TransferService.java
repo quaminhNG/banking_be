@@ -8,8 +8,10 @@ import com.banking.modules.transaction.entity.Transaction;
 import com.banking.modules.transaction.entity.TransactionStatus;
 import com.banking.modules.transaction.entity.TransactionType;
 import com.banking.modules.transaction.repository.TransactionRepository;
+import com.banking.modules.transaction.service.TransactionService;
 import com.banking.modules.transfer.dto.request.TransferRequest;
 import com.banking.modules.transfer.dto.response.TransferResponse;
+import com.banking.modules.transfer.event.TransferCompletedEvent;
 import com.banking.security.SecurityUtils;
 import com.banking.modules.audit.service.AuditService;
 import lombok.RequiredArgsConstructor;
@@ -32,10 +34,11 @@ public class TransferService {
     private final LedgerService ledgerService;
     private final SecurityUtils securityUtils;
     private final AuditService auditService;
+    private final TransactionService transactionService;
 
     @Transactional
     public TransferResponse transfer(TransferRequest request) {
-        // Chỉ được transfer từ account của chính mình
+        // transfer myself
         securityUtils.verifyAccountOwnership(request.getFromAccountId());
         if (request.getAmount().compareTo(TransferConstants.MIN_TRANSFER) < 0) {
             throw new BankingException("The minimum transfer amount is "
@@ -77,8 +80,7 @@ public class TransferService {
             newTx.setCreatedAt(LocalDateTime.now());
             return transactionRepository.save(newTx);
         });
-
-        // 4. Thực hiện ghi sổ cái (Ledger)
+        // (Ledger)
         // withdraw từ tài khoản nguồn, deposit vào tài khoản đích
         // LedgerService tự lock theo thứ tự để tránh deadlock
         ledgerService.transferLedger(
@@ -94,11 +96,20 @@ public class TransferService {
         // Audit Logging
         String userId = securityUtils.getCurrentUser().getId();
         auditService.createAuditLog(
-            transaction.getId(),
-            userId,
-            "TRANSFER",
-            "{\"amount\":" + transaction.getAmount() + ",\"from\":\"" + request.getFromAccountId() + "\",\"to\":\"" + request.getToAccountId() + "\"}"
+                transaction.getId(),
+                userId,
+                "TRANSFER",
+                "{\"amount\":" + transaction.getAmount() + ",\"from\":\"" + request.getFromAccountId() + "\",\"to\":\""
+                        + request.getToAccountId() + "\"}");
+
+        TransferCompletedEvent event = new TransferCompletedEvent(
+                transaction.getId(),
+                transaction.getFromAccountId(),
+                transaction.getToAccountId(),
+                transaction.getAmount(),
+                transaction.getCurrency()
         );
+        transactionService.handleTransferEvent(event);
 
         return mapToResponse(transaction, "Transfer successful.");
     }

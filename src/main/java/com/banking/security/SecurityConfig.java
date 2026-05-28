@@ -77,6 +77,14 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         // Public endpoints
                         .requestMatchers("/api/v1/auth/**").permitAll()
+                        // Swagger UI - cho phép xem docs không cần login
+                        .requestMatchers(
+                                "/swagger-ui/**",
+                                "/swagger-ui.html",
+                                "/v3/api-docs/**",
+                                "/swagger-resources/**",
+                                "/webjars/**"
+                        ).permitAll()
                         // ADMIN only
                         .requestMatchers(HttpMethod.POST, "/api/v1/accounts").hasRole("ADMIN")
                         // ngoài 2 điều trên thì phải đăng nhập

@@ -8,9 +8,11 @@ import com.banking.modules.transaction.entity.Transaction;
 import com.banking.modules.transaction.entity.TransactionStatus;
 import com.banking.modules.transaction.entity.TransactionType;
 import com.banking.modules.transaction.repository.TransactionRepository;
+import com.banking.modules.transfer.event.TransferCompletedEvent;
 import com.banking.security.SecurityUtils;
 import com.banking.modules.audit.service.AuditService;
 import lombok.RequiredArgsConstructor;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -47,9 +49,45 @@ public class TransactionService {
         }
         return processTransaction(request, TransactionType.WITHDRAW);
     }
+    @Transactional
+    public void handleTransferEvent(TransferCompletedEvent event) {
+        System.out.println("Process transaction history for transfer: " + event.getTransactionId());
+
+        String senderTxId = "S-" + event.getTransactionId();
+        if (transactionRepository.findById(senderTxId).isEmpty()) {
+            Transaction senderTx = new Transaction();
+            senderTx.setId(senderTxId);
+            senderTx.setAccountId(event.getFromAccountId());
+            senderTx.setFromAccountId(event.getFromAccountId());
+            senderTx.setToAccountId(event.getToAccountId());
+            senderTx.setAmount(event.getAmount());
+            senderTx.setType(TransactionType.TRANSFER);
+            senderTx.setCurrency(event.getCurrency());
+            senderTx.setStatus(TransactionStatus.SUCCESS);
+            senderTx.setCreatedAt(LocalDateTime.now());
+            senderTx.setUpdatedAt(LocalDateTime.now());
+            transactionRepository.save(senderTx);
+        }
+
+        String receiverTxId = "R-" + event.getTransactionId();
+        if (transactionRepository.findById(receiverTxId).isEmpty()) {
+            Transaction receiverTx = new Transaction();
+            receiverTx.setId(receiverTxId);
+            receiverTx.setAccountId(event.getToAccountId());
+            receiverTx.setFromAccountId(event.getFromAccountId());
+            receiverTx.setToAccountId(event.getToAccountId());
+            receiverTx.setAmount(event.getAmount());
+            receiverTx.setType(TransactionType.TRANSFER);
+            receiverTx.setCurrency(event.getCurrency());
+            receiverTx.setStatus(TransactionStatus.SUCCESS);
+            receiverTx.setCreatedAt(LocalDateTime.now());
+            receiverTx.setUpdatedAt(LocalDateTime.now());
+            transactionRepository.save(receiverTx);
+        }
+    }
 
     private TransactionResponse processTransaction(TransactionRequest request, TransactionType type) {
-        // Chỉ cho phép thao tác trên account của chính mình
+        // make myself account
         securityUtils.verifyAccountOwnership(request.getAccountId());
         if (request.getIdempotencyKey() != null) {
             Optional<Transaction> existing = transactionRepository.findByIdempotencyKey(request.getIdempotencyKey());
@@ -80,7 +118,6 @@ public class TransactionService {
         transaction.setStatus(TransactionStatus.SUCCESS);
         transaction.setUpdatedAt(LocalDateTime.now());
         transactionRepository.save(transaction);
-
         // Audit Logging
         String userId = securityUtils.getCurrentUser().getId();
         auditService.createAuditLog(
