@@ -49,7 +49,7 @@ public class TransferServiceTest {
         validRequest = new TransferRequest();
         validRequest.setFromAccountId("ACC123");
         validRequest.setToAccountId("ACC456");
-        validRequest.setAmount(new BigDecimal("1000"));
+        validRequest.setAmount(new BigDecimal("10000"));
         validRequest.setCurrency("VND");
         validRequest.setIdempotencyKey("unique-key-123");
 

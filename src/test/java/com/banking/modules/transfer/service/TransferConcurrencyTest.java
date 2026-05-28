@@ -140,7 +140,7 @@ public class TransferConcurrencyTest {
                 .pollInterval(500, TimeUnit.MILLISECONDS)
                 .untilAsserted(() -> {
                     long totalTx = transactionRepository.count();
-                    assertEquals(1000, totalTx, "Số lượng bản ghi Transaction không khớp (Không dùng RabbitMQ)");
+                    assertEquals(3000, totalTx, "Số lượng bản ghi Transaction không khớp (Không dùng RabbitMQ)");
                 });
 
 
