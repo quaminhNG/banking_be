@@ -2,6 +2,7 @@ image: maven:3.9.6-eclipse-temurin-21
 stages:
   - build
   - test
+  - deploy
 cache:
   paths:
     - .m2/repository
@@ -31,3 +32,28 @@ test_job:
     - echo "Bắt đầu chạy Unit Test..."
     - sleep 10
     - mvn test
+deploy_job:
+  stage: deploy
+  image: alpine:latest # Dùng hệ điều hành Linux siêu nhẹ
+  before_script:
+    # 1. Cài đặt công cụ SSH để kết nối
+    - apk add --no-cache openssh-client
+    # 2. Tạo file chìa khóa từ biến bảo mật của GitLab
+    - mkdir -p ~/.ssh
+    - echo "$EC2_SSH_KEY" > ~/.ssh/id_rsa
+    - chmod 600 ~/.ssh/id_rsa
+    # 3. Bỏ qua câu hỏi xác nhận "Are you sure you want to continue connecting"
+    - ssh-keyscan -H $EC2_HOST >> ~/.ssh/known_hosts
+  script:
+    - echo "Bắt đầu chuyển file .jar lên AWS EC2..."
+    # 4. Copy file .jar từ GitLab sang EC2 bằng SCP
+    - scp target/*.jar $EC2_USERNAME@$EC2_HOST:~/banking-backend.jar
+    
+    - echo "Đang khởi động lại hệ thống trên EC2..."
+    # 5. Đăng nhập vào EC2, tắt app cũ (nếu đang chạy), và bật app mới chạy ngầm (nohup)
+    - |
+      ssh $EC2_USERNAME@$EC2_HOST "
+        pkill -f 'java -jar' || true
+        nohup java -jar ~/banking-backend.jar > app.log 2>&1 &
+      "
+    - echo "Triển khai thành công! Hệ thống đang chạy."
