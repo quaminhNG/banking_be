@@ -38,6 +38,9 @@ public class TransferServiceTest {
     @Mock
     private AuditService auditService;
 
+    @Mock
+    private com.banking.modules.transaction.service.TransactionService transactionService;
+
     @InjectMocks
     private TransferService transferService;
 
@@ -62,7 +65,11 @@ public class TransferServiceTest {
     void transfer_Success() {
         when(transactionRepository.findByIdempotencyKey(anyString())).thenReturn(Optional.empty());
         when(securityUtils.getCurrentUser()).thenReturn(mockUser);
-        when(transactionRepository.save(any(Transaction.class))).thenAnswer(i -> i.getArguments()[0]);
+        when(transactionRepository.save(any(Transaction.class))).thenAnswer(invocation -> {
+            Transaction tx = invocation.getArgument(0);
+            tx.setId("TX_MOCK_ID_123");
+            return tx;
+        });
 
         TransferResponse response = transferService.transfer(validRequest);
 
@@ -88,6 +95,11 @@ public class TransferServiceTest {
     @Test
     void transfer_InsufficientBalance_ShouldBubbleUpException() {
         when(transactionRepository.findByIdempotencyKey(anyString())).thenReturn(Optional.empty());
+        when(transactionRepository.save(any(Transaction.class))).thenAnswer(invocation -> {
+            Transaction tx = invocation.getArgument(0);
+            tx.setId("TX_MOCK_ID_123");
+            return tx;
+        });
 
         doThrow(new BankingException("Insufficient balance"))
                 .when(ledgerService).transferLedger(anyString(), anyString(), any(BigDecimal.class), anyString());
