@@ -31,3 +31,4 @@ test_api.py
 # OS files
 .DS_Store
 Thumbs.db
+CLAUDE.md
