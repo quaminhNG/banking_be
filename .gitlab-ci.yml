@@ -39,7 +39,14 @@ deploy_job:
     - apk add --no-cache openssh-client
     - mkdir -p ~/.ssh
     - echo "$EC2_SSH_KEY" > ~/.ssh/id_rsa
-    - chmod 600 ~/.ssh/id_rsa
+    - chmod 400 ~/.ssh/id_rsa
+
+    - echo "===== CHECK SSH KEY ====="
+    - head -n 2 ~/.ssh/id_rsa
+    - tail -n 2 ~/.ssh/id_rsa
+
+    - echo "===== TEST SSH ====="
+    - ssh -v -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no $EC2_USERNAME@$EC2_HOST "echo connected"
   script:
     - echo "1. Dừng hệ thống cũ đang chạy trên EC2..."
     - ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no $EC2_USERNAME@$EC2_HOST "pkill -f 'java -jar' || true; sleep 2"
