@@ -16,6 +16,16 @@ build_job:
     expire_in: 1 hour
 test_job:
   stage: test
+  services:
+    - name: postgres:16
+      alias: postgres
+  variables:
+    POSTGRES_DB: banking_test
+    POSTGRES_USER: postgres
+    POSTGRES_PASSWORD: postgres
+    SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/banking_test
+    SPRING_DATASOURCE_USERNAME: postgres
+    SPRING_DATASOURCE_PASSWORD: postgres
   script:
     - echo "Bắt đầu chạy Unit Test..."
     - mvn test
