@@ -1,0 +1,21 @@
+image: maven:3.9.6-eclipse-temurin-21
+stages:
+  - build
+  - test
+cache:
+  paths:
+    - .m2/repository
+build_job:
+  stage: build
+  script:
+    - echo "Bắt đầu compile mã nguồn và đóng gói với Java 21..."
+    - mvn clean package -DskipTests
+  artifacts:
+    paths:
+      - target/*.jar
+    expire_in: 1 hour
+test_job:
+  stage: test
+  script:
+    - echo "Bắt đầu chạy Unit Test..."
+    - mvn test
