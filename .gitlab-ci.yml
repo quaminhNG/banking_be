@@ -34,26 +34,20 @@ test_job:
     - mvn test
 deploy_job:
   stage: deploy
-  image: alpine:latest # use Linux OS smooth
+  image: alpine:latest
   before_script:
-    # 1. install ssh tool
     - apk add --no-cache openssh-client
-    # 2. create ssh key file from Gitlab secure variable
     - mkdir -p ~/.ssh
     - echo "$EC2_SSH_KEY" > ~/.ssh/id_rsa
     - chmod 600 ~/.ssh/id_rsa
-    # 3. disable the question "Are you sure you want to continue connecting"
-    - ssh-keyscan -H $EC2_HOST >> ~/.ssh/known_hosts
   script:
     - echo "start copy .jar file to AWS EC2..."
-    # 4. copy file .jar from GitLab to EC2 by SCP
-    - scp target/*.jar $EC2_USERNAME@$EC2_HOST:~/banking-backend.jar
+    # bypass "Are you sure..."
+    - scp -o StrictHostKeyChecking=no target/*.jar $EC2_USERNAME@$EC2_HOST:~/banking-backend.jar
     
     - echo "start to restart the system on EC2..."
-    # 5. log in to EC2, turn off the old app (if running), and turn on the new app to run in the background (nohup)
-    - |
-      ssh $EC2_USERNAME@$EC2_HOST "
-        pkill -f 'java -jar' || true
-        nohup java -jar ~/banking-backend.jar > app.log 2>&1 &
-      "
-    - echo "deploy successfully! System is running."
+    # run in 1 line, using semicolon to separate commands.
+    # add < /dev/null at the end to completely separate the Java process from the SSH session.
+    - ssh -o StrictHostKeyChecking=no $EC2_USERNAME@$EC2_HOST "pkill -f 'java -jar' || true; nohup java -jar ~/banking-backend.jar > app.log 2>&1 < /dev/null &"
+    
+    - echo "Triển khai thành công! Hệ thống Midas Core đang chạy trên AWS."
