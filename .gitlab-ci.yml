@@ -49,7 +49,7 @@ deploy_job:
     - ssh -v -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no $EC2_USERNAME@$EC2_HOST "echo connected"
   script:
     - echo "1. Dừng hệ thống cũ đang chạy trên EC2..."
-    - ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no $EC2_USERNAME@$EC2_HOST "pkill -f 'java -jar' || true; sleep 2"
+    - ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no $EC2_USERNAME@$EC2_HOST "pkill -f banking-backend.jar || true"
     
     - echo "2. Chuyển file .jar cập nhật lên máy chủ..."
     - ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no $EC2_USERNAME@$EC2_HOST "rm -f ~/banking-backend.jar"
