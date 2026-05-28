@@ -35,27 +35,34 @@ test_job:
 deploy_job:
   stage: deploy
   image: alpine:latest
+
   before_script:
     - apk add --no-cache openssh-client
     - mkdir -p ~/.ssh
     - echo "$EC2_SSH_KEY" > ~/.ssh/id_rsa
     - chmod 400 ~/.ssh/id_rsa
 
-    - echo "===== CHECK SSH KEY ====="
-    - head -n 2 ~/.ssh/id_rsa
-    - tail -n 2 ~/.ssh/id_rsa
-
-    - echo "===== TEST SSH ====="
-    - ssh -v -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no $EC2_USERNAME@$EC2_HOST "echo connected"
   script:
-    - echo "1. Dừng hệ thống cũ đang chạy trên EC2..."
-    - ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no $EC2_USERNAME@$EC2_HOST "pkill -f banking-backend.jar || true"
-    
-    - echo "2. Chuyển file .jar cập nhật lên máy chủ..."
-    - ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no $EC2_USERNAME@$EC2_HOST "rm -f ~/banking-backend.jar"
+    - echo "1. Stop old app..."
+    - |
+      ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no $EC2_USERNAME@$EC2_HOST '
+        PID=$(pgrep -f banking-backend.jar)
+
+        if [ ! -z "$PID" ]; then
+          echo "Killing PID: $PID"
+          kill -15 $PID
+          sleep 3
+        else
+          echo "No app running"
+        fi
+      '
+    - echo "2. Upload jar..."
     - scp -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no target/*.jar $EC2_USERNAME@$EC2_HOST:~/banking-backend.jar
-    
-    - echo "3. Khởi động hệ thống mới..."
-    - ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no $EC2_USERNAME@$EC2_HOST "nohup java -jar ~/banking-backend.jar > app.log 2>&1 < /dev/null & sleep 3"
-    
-    - echo "start the new app successfully!"
+
+    - echo "3. Start new app..."
+    - |
+      ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no $EC2_USERNAME@$EC2_HOST '
+        nohup java -jar ~/banking-backend.jar > app.log 2>&1 &
+      '
+
+    - echo "Deploy success!"
