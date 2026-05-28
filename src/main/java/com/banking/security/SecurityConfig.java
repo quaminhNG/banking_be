@@ -76,7 +76,7 @@ public class SecurityConfig {
                 )
                 .authorizeHttpRequests(auth -> auth
                         // Public endpoints
-                        .requestMatchers("/api/v1/auth/**").permitAll()
+                        .requestMatchers("/api/v1/auth/**", "/api/v1/health").permitAll()
                         // Swagger UI - cho phép xem docs không cần login
                         .requestMatchers(
                                 "/swagger-ui/**",
