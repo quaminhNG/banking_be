@@ -32,7 +32,6 @@ import static org.mockito.Mockito.when;
 
 @Slf4j
 @SpringBootTest
-@ActiveProfiles("test")
 public class TransferConcurrencyTest {
 
     @Autowired
