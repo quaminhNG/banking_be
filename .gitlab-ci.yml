@@ -41,13 +41,14 @@ deploy_job:
     - echo "$EC2_SSH_KEY" > ~/.ssh/id_rsa
     - chmod 600 ~/.ssh/id_rsa
   script:
-    - echo "start copy .jar file to AWS EC2..."
-    - scp -o StrictHostKeyChecking=no target/*.jar $EC2_USERNAME@$EC2_HOST:~/banking-backend.jar
+    - echo "1. Dừng hệ thống cũ đang chạy trên EC2..."
+    - ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no $EC2_USERNAME@$EC2_HOST "pkill -f 'java -jar' || true; sleep 2"
     
-    - echo "stop the old app (if running)..."
-    - ssh -o StrictHostKeyChecking=no $EC2_USERNAME@$EC2_HOST "pkill -f 'banking-backend.jar' || true"
+    - echo "2. Chuyển file .jar cập nhật lên máy chủ..."
+    - ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no $EC2_USERNAME@$EC2_HOST "rm -f ~/banking-backend.jar"
+    - scp -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no target/*.jar $EC2_USERNAME@$EC2_HOST:~/banking-backend.jar
     
-    - echo "start the new app..."
-    - ssh -o StrictHostKeyChecking=no $EC2_USERNAME@$EC2_HOST "nohup java -jar ~/banking-backend.jar > app.log 2>&1 & sleep 2"
+    - echo "3. Khởi động hệ thống mới..."
+    - ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no $EC2_USERNAME@$EC2_HOST "nohup java -jar ~/banking-backend.jar > app.log 2>&1 < /dev/null & sleep 3"
     
     - echo "start the new app successfully!"
