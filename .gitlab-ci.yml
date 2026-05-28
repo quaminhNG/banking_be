@@ -23,9 +23,11 @@ test_job:
     POSTGRES_DB: banking_test
     POSTGRES_USER: postgres
     POSTGRES_PASSWORD: postgres
+    POSTGRES_HOST_AUTH_METHOD: trust
     SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/banking_test
     SPRING_DATASOURCE_USERNAME: postgres
     SPRING_DATASOURCE_PASSWORD: postgres
   script:
     - echo "Bắt đầu chạy Unit Test..."
+    - sleep 10
     - mvn test
