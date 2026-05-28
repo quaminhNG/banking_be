@@ -35,34 +35,30 @@ test_job:
 deploy_job:
   stage: deploy
   image: alpine:latest
-
   before_script:
     - apk add --no-cache openssh-client
     - mkdir -p ~/.ssh
     - echo "$EC2_SSH_KEY" > ~/.ssh/id_rsa
     - chmod 400 ~/.ssh/id_rsa
-
   script:
-    - echo "1. Stop old app..."
-    - |
-      ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no $EC2_USERNAME@$EC2_HOST '
-        PID=$(pgrep -f banking-backend.jar)
-
-        if [ ! -z "$PID" ]; then
-          echo "Killing PID: $PID"
-          kill -15 $PID
-          sleep 3
-        else
-          echo "No app running"
-        fi
-      '
-    - echo "2. Upload jar..."
+    - echo "1. Chuyển file .jar lên máy chủ..."
     - scp -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no target/*.jar $EC2_USERNAME@$EC2_HOST:~/banking-backend.jar
-
-    - echo "3. Start new app..."
+    
+    - echo "2. Thực thi kịch bản cập nhật trên EC2..."
     - |
-      ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no $EC2_USERNAME@$EC2_HOST '
+      ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no $EC2_USERNAME@$EC2_HOST << 'EOF'
+        echo "--> Tìm và tắt ứng dụng cũ..."
+        pkill -f 'banking-backend.jar' || true
+        
+        echo "--> Đợi 3 giây để hệ thống dọn dẹp RAM..."
+        sleep 3
+        
+        echo "--> Khởi động Midas Core phiên bản mới..."
         nohup java -jar ~/banking-backend.jar > app.log 2>&1 &
-      '
-
-    - echo "Deploy success!"
+        
+        echo "--> Đợi app chạy lên và thoát an toàn..."
+        sleep 2
+        exit 0
+      EOF
+      
+    - echo "Triển khai thành công rực rỡ!"
