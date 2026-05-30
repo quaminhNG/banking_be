@@ -40,6 +40,7 @@ public class AuthService {
         User user = new User(
                 UUID.randomUUID().toString(),
                 request.getUsername(),
+                null,
                 passwordEncoder.encode(request.getPassword()),
                 UserRole.USER,
                 accountId,

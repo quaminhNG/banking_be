@@ -1,6 +1,7 @@
 package com.banking.modules.transaction.service;
 
 import com.banking.common.constants.TransactionConstants;
+import com.banking.exception.BankingException;
 import com.banking.modules.ledger.service.LedgerService;
 import com.banking.modules.transaction.dto.request.TransactionRequest;
 import com.banking.modules.transaction.dto.response.TransactionResponse;
@@ -89,6 +90,18 @@ public class TransactionService {
     private TransactionResponse processTransaction(TransactionRequest request, TransactionType type) {
         // make myself account
         securityUtils.verifyAccountOwnership(request.getAccountId());
+        if (type == TransactionType.DEPOSIT && request.getAmount().compareTo(TransactionConstants.MIN_DEPOSIT) < 0) {
+            throw new BankingException("The minimum deposit amount is " + TransactionConstants.MIN_DEPOSIT + TransactionConstants.CURRENCY_VND);
+        }
+        if (type == TransactionType.WITHDRAW) {
+             if (request.getAmount().compareTo(TransactionConstants.MIN_WITHDRAW) < 0) {
+                 throw new BankingException("The minimum withdrawal amount is " + TransactionConstants.MIN_WITHDRAW + TransactionConstants.CURRENCY_VND);
+             }
+             if (request.getAmount().compareTo(TransactionConstants.MAX_WITHDRAW) > 0) {
+                 throw new BankingException("The maximum withdrawal amount is " + TransactionConstants.MAX_WITHDRAW + TransactionConstants.CURRENCY_VND);
+             }
+        }
+
         if (request.getIdempotencyKey() != null) {
             Optional<Transaction> existing = transactionRepository.findByIdempotencyKey(request.getIdempotencyKey());
             if (existing.isPresent()) {

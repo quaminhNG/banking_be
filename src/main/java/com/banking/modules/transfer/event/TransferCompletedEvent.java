@@ -1,6 +1,7 @@
 package com.banking.modules.transfer.event;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -18,4 +19,6 @@ public class TransferCompletedEvent implements Serializable {
     private String toAccountId;
     private BigDecimal amount;
     private String currency;
+    private String email;
+    private LocalDateTime timestamp;
 }

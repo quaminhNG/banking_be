@@ -15,6 +15,8 @@ import com.banking.modules.transfer.event.TransferCompletedEvent;
 import com.banking.security.SecurityUtils;
 import com.banking.modules.audit.service.AuditService;
 import lombok.RequiredArgsConstructor;
+
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -35,7 +37,7 @@ public class TransferService {
     private final SecurityUtils securityUtils;
     private final AuditService auditService;
     private final TransactionService transactionService;
-
+    private final KafkaTemplate<String, Object> kafkaTemplate;
     @Transactional
     public TransferResponse transfer(TransferRequest request) {
         // transfer myself
@@ -93,6 +95,8 @@ public class TransferService {
         transaction.setUpdatedAt(LocalDateTime.now());
         transactionRepository.save(transaction);
 
+     
+        
         // Audit Logging
         String userId = securityUtils.getCurrentUser().getId();
         auditService.createAuditLog(
@@ -107,9 +111,11 @@ public class TransferService {
                 transaction.getFromAccountId(),
                 transaction.getToAccountId(),
                 transaction.getAmount(),
-                transaction.getCurrency()
+                transaction.getCurrency(),
+                securityUtils.getCurrentUser().getEmail(),
+                LocalDateTime.now()
         );
-        transactionService.handleTransferEvent(event);
+        kafkaTemplate.send("transfer-completed", event);
 
         return mapToResponse(transaction, "Transfer successful.");
     }

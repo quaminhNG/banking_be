@@ -64,7 +64,7 @@ public class GlobalExceptionHandler {
         ErrorResponse error = ErrorResponse.build(
                 HttpStatus.INTERNAL_SERVER_ERROR.value(),
                 HttpStatus.INTERNAL_SERVER_ERROR.getReasonPhrase(),
-                "An unexpected error occurred!",
+                "An unexpected error occurred! " + e.toString() + " - " + e.getMessage(),
                 request.getRequestURI());
         return new ResponseEntity<>(error, HttpStatus.INTERNAL_SERVER_ERROR);
     }
@@ -75,7 +75,7 @@ public class GlobalExceptionHandler {
         ErrorResponse error = ErrorResponse.build(
                 HttpStatus.INTERNAL_SERVER_ERROR.value(),
                 HttpStatus.INTERNAL_SERVER_ERROR.getReasonPhrase(),
-                "Technical issue, please try again later.",
+                "Technical issue: " + e.toString() + " - " + e.getMessage(),
                 request.getRequestURI());
         return new ResponseEntity<>(error, HttpStatus.INTERNAL_SERVER_ERROR);
     }
