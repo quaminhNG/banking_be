@@ -117,10 +117,10 @@ public class TransferConcurrencyTest {
                     org.springframework.security.authentication.UsernamePasswordAuthenticationToken auth =
                             new org.springframework.security.authentication.UsernamePasswordAuthenticationToken(
                                     "testuser_concurrency", null, java.util.Collections.emptyList());
-                    org.springframework.security.core.context.SecurityContextHolder.getContext().setAuthen 
-                            request = new TransferRequest();
+                    org.springframework.security.core.context.SecurityContextHolder.getContext().setAuthentication(auth);
+
+                    TransferRequest request = new TransferRequest();
                     request.setFromAccountId(FROM_ACCOUNT_ID);
-                            
                     request.setToAccountId(TO_ACCOUNT_ID);
                     request.setAmount(new BigDecimal("10000"));
                     request.setCurrency("VND");
@@ -158,8 +158,9 @@ public class TransferConcurrencyTest {
                 });
 
 
-        assertEqual
-
+        assertEquals(0, initialTotal.compareTo(finalTotal), "Tổng tiền hệ thống không được thay đổi!");
+        assertEquals(1000, successCount.get(), "Số lượng giao dịch thành công không đạt 1000");
+        assertEquals(0, new BigDecimal("10000000.00").compareTo(fromSnapshot.getBalance()), "Số dư nguồn sai");
         assertEquals(0, new BigDecimal("10000000.00").compareTo(toSnapshot.getBalance()), "Số dư đích sai");
     }
 }
