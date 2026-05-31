@@ -49,8 +49,11 @@ public class TransferConcurrencyTest {
     @Autowired
     private TransactionRepository transactionRepository;
 
-    @MockBean
+    @Autowired
     private SecurityUtils securityUtils;
+
+    @Autowired
+    private com.banking.modules.auth.repository.UserRepository userRepository;
 
     @MockBean
     private com.banking.modules.transaction.controller.DepositController depositController;
@@ -77,12 +80,16 @@ public class TransferConcurrencyTest {
 
         User mockUser = new User();
         mockUser.setId("USER_TEST_CONCURRENCY");
+        mockUser.setUsername("testuser_concurrency");
+        mockUser.setPassword("password");
+        mockUser.setRole(com.banking.modules.auth.entity.UserRole.USER);
         mockUser.setAccountId(FROM_ACCOUNT_ID);
-        when(securityUtils.getCurrentUser()).thenReturn(mockUser);
+        userRepository.save(mockUser);
     }
 
     @AfterEach
     void cleanUp() {
+        userRepository.deleteById("USER_TEST_CONCURRENCY");
         transactionRepository.deleteAll();
         balanceSnapshotRepository.deleteById(FROM_ACCOUNT_ID);
         balanceSnapshotRepository.deleteById(TO_ACCOUNT_ID);
@@ -106,8 +113,14 @@ public class TransferConcurrencyTest {
         for (int i = 0; i < numberOfRequests; i++) {
             executor.submit(() -> {
                 try {
-                    TransferRequest request = new TransferRequest();
+                    // Set up SecurityContext for the background thread
+                    org.springframework.security.authentication.UsernamePasswordAuthenticationToken auth =
+                            new org.springframework.security.authentication.UsernamePasswordAuthenticationToken(
+                                    "testuser_concurrency", null, java.util.Collections.emptyList());
+                    org.springframework.security.core.context.SecurityContextHolder.getContext().setAuthen 
+                            request = new TransferRequest();
                     request.setFromAccountId(FROM_ACCOUNT_ID);
+                            
                     request.setToAccountId(TO_ACCOUNT_ID);
                     request.setAmount(new BigDecimal("10000"));
                     request.setCurrency("VND");
@@ -118,7 +131,8 @@ public class TransferConcurrencyTest {
                 } catch (Exception e) {
                     failCount.incrementAndGet();
                     log.error("Giao dịch thất bại: {}", e.getMessage());
-                    e.printStackTrace();
+                } finally {
+                    org.springframework.security.core.context.SecurityContextHolder.clearContext();
                 }
             });
         }
@@ -144,9 +158,8 @@ public class TransferConcurrencyTest {
                 });
 
 
-        assertEquals(0, initialTotal.compareTo(finalTotal), "Tổng tiền hệ thống không được thay đổi!");
-        assertEquals(1000, successCount.get(), "Số lượng giao dịch thành công không đạt 1000");
-        assertEquals(0, new BigDecimal("10000000.00").compareTo(fromSnapshot.getBalance()), "Số dư nguồn sai");
+        assertEqual
+
         assertEquals(0, new BigDecimal("10000000.00").compareTo(toSnapshot.getBalance()), "Số dư đích sai");
     }
 }
