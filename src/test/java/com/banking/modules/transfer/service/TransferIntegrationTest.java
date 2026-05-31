@@ -106,7 +106,7 @@ public class TransferIntegrationTest {
 
         TransferResponse response = transferService.transfer(request);
 
-        assertEquals("SUCCESS", response.getStatus());
+        assertEquals("SUCCESS", response.getStatus().toString());
 
         // Verify Balance
         BalanceSnapshot fromSnapshot = balanceSnapshotRepository.findById(FROM_ACCOUNT_ID).orElseThrow();
@@ -162,7 +162,7 @@ public class TransferIntegrationTest {
 
         TransferResponse response2 = transferService.transfer(request2);
 
-        assertEquals("SUCCESS", response2.getStatus());
+        assertEquals("SUCCESS", response2.getStatus().toString());
         assertEquals("Transfer already completed.", response2.getMessage());
 
         // Verify balance was only deducted ONCE (900,000 left)

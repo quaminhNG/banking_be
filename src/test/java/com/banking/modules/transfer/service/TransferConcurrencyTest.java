@@ -56,6 +56,9 @@ public class TransferConcurrencyTest {
     private com.banking.modules.auth.repository.UserRepository userRepository;
 
     @MockBean
+    private org.springframework.kafka.core.KafkaTemplate<String, Object> kafkaTemplate;
+
+    @MockBean
     private com.banking.modules.transaction.controller.DepositController depositController;
 
     private final String FROM_ACCOUNT_ID = "ACC_CONCURRENCY_1";

@@ -41,6 +41,9 @@ public class TransferServiceTest {
     @Mock
     private com.banking.modules.transaction.service.TransactionService transactionService;
 
+    @Mock
+    private org.springframework.kafka.core.KafkaTemplate<String, Object> kafkaTemplate;
+
     @InjectMocks
     private TransferService transferService;
 
