@@ -33,7 +33,10 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @SpringBootTest
-@EmbeddedKafka(partitions = 1, brokerProperties = { "listeners=PLAINTEXT://localhost:9092", "port=9092" })
+@EmbeddedKafka(partitions = 1, topics = { "transfer-completed" })
+@org.springframework.test.context.TestPropertySource(properties = {
+        "spring.kafka.bootstrap-servers=${spring.embedded.kafka.brokers}"
+})
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 public class TransferIntegrationTest {
 
