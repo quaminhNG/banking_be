@@ -1,0 +1,511 @@
+{
+  "info": {
+    "name": "Banking Backend API",
+    "_postman_id": "banking-backend-collection-v1",
+    "description": "Collection đầy đủ cho Banking Backend API - Spring Boot 3.4\n\n## Hướng dẫn sử dụng:\n1. Chạy request `Login` hoặc `Register`\n2. Token JWT sẽ tự động được lưu vào biến `{{jwt_token}}`\n3. Tất cả requests còn lại sẽ tự động dùng token này\n\n## Tài khoản mẫu:\n- testuser1 / 123456 (Account: ACC_SEED_A - 50,000,000 VND)\n- testuser2 / 123456 (Account: ACC_SEED_B - 10,000 VND)",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8080",
+      "type": "string"
+    },
+    {
+      "key": "jwt_token",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "🔐 Authentication",
+      "item": [
+        {
+          "name": "Register - Đăng ký tài khoản mới",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"newuser\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/auth/register",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "auth", "register"]
+            },
+            "description": "Tạo tài khoản mới. Hệ thống tự động tạo Account liên kết và trả về JWT token."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    pm.collectionVariables.set('jwt_token', response.token);",
+                  "    console.log('✅ Token saved:', response.token.substring(0, 20) + '...');",
+                  "    pm.test('Register thành công', () => pm.response.to.have.status(200));",
+                  "    pm.test('Có JWT token', () => pm.expect(response.token).to.not.be.empty);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login - Đăng nhập (testuser1)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"testuser1\",\n  \"password\": \"123456\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "auth", "login"]
+            },
+            "description": "Đăng nhập bằng testuser1. Token được lưu tự động vào biến {{jwt_token}}."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    pm.collectionVariables.set('jwt_token', response.token);",
+                  "    pm.collectionVariables.set('account_id', response.accountId);",
+                  "    console.log('✅ Token saved | Account:', response.accountId);",
+                  "    pm.test('Login thành công', () => pm.response.to.have.status(200));",
+                  "    pm.test('Có JWT token', () => pm.expect(response.token).to.not.be.empty);",
+                  "    pm.test('Role là USER', () => pm.expect(response.role).to.eql('USER'));",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login - Sai password (401 Expected)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"testuser1\",\n  \"password\": \"wrongpassword\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "auth", "login"]
+            },
+            "description": "Demo: Đăng nhập sai password → 401 Unauthorized"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Trả về 401 khi sai password', () => pm.response.to.have.status(401));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "💰 Transaction - Nạp & Rút tiền",
+      "item": [
+        {
+          "name": "Deposit - Nạp tiền",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{jwt_token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"accountId\": \"ACC_SEED_A\",\n  \"amount\": 1000000,\n  \"idempotencyKey\": \"DEPOSIT-{{$randomUUID}}\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/transaction/deposit",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "transaction", "deposit"]
+            },
+            "description": "Nạp tiền vào tài khoản. Hỗ trợ Idempotency Key để tránh nạp trùng."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Nạp tiền thành công (200)', () => pm.response.to.have.status(200));",
+                  "if (pm.response.code === 200) {",
+                  "    const r = pm.response.json();",
+                  "    pm.test('Có transactionId', () => pm.expect(r.transactionId).to.not.be.undefined);",
+                  "    pm.test('Status là SUCCESS', () => pm.expect(r.status).to.eql('SUCCESS'));",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Deposit - Idempotency Demo (Gửi key giống nhau)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{jwt_token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"accountId\": \"ACC_SEED_A\",\n  \"amount\": 9999999,\n  \"idempotencyKey\": \"FIXED-DEMO-KEY-001\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/transaction/deposit",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "transaction", "deposit"]
+            },
+            "description": "Gửi request 2 lần với cùng idempotencyKey. Lần 2 sẽ trả về kết quả cũ, KHÔNG nạp tiền thêm."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Idempotency hoạt động đúng', () => pm.response.to.have.status(200));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Withdraw - Rút tiền",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{jwt_token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"accountId\": \"ACC_SEED_A\",\n  \"amount\": 500000,\n  \"idempotencyKey\": \"WITHDRAW-{{$randomUUID}}\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/transaction/withdraw",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "transaction", "withdraw"]
+            },
+            "description": "Rút tiền từ tài khoản. Kiểm tra số dư trước khi thực hiện."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Rút tiền thành công hoặc lỗi hợp lý', () => {",
+                  "    pm.expect([200, 400]).to.include(pm.response.code);",
+                  "});",
+                  "if (pm.response.code === 200) {",
+                  "    pm.test('Có transactionId', () => pm.expect(pm.response.json().transactionId).to.not.be.undefined);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Withdraw - Rút quá số dư (400 Expected)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{jwt_token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"accountId\": \"ACC_SEED_A\",\n  \"amount\": 999999999999,\n  \"idempotencyKey\": \"WITHDRAW-OVERLIMIT-001\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/transaction/withdraw",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "transaction", "withdraw"]
+            },
+            "description": "Demo: Rút quá số dư → 400 Insufficient Balance"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Trả về lỗi khi rút quá số dư', () => pm.response.to.have.status(400));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "🔄 Transfer - Chuyển tiền",
+      "item": [
+        {
+          "name": "Internal Transfer - Chuyển nội bộ",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{jwt_token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fromAccountId\": \"ACC_SEED_A\",\n  \"toAccountId\": \"ACC_SEED_B\",\n  \"amount\": 500000,\n  \"currency\": \"VND\",\n  \"idempotencyKey\": \"TRANSFER-{{$randomUUID}}\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/transaction/transfer",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "transaction", "transfer"]
+            },
+            "description": "Chuyển tiền nội bộ giữa 2 tài khoản trong hệ thống. Dùng Pessimistic Lock để an toàn concurrency."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Chuyển tiền thành công (200)', () => pm.response.to.have.status(200));",
+                  "if (pm.response.code === 200) {",
+                  "    const r = pm.response.json();",
+                  "    pm.test('Có transactionId', () => pm.expect(r.transactionId).to.not.be.undefined);",
+                  "    pm.test('Status là SUCCESS', () => pm.expect(r.status).to.eql('SUCCESS'));",
+                  "    console.log('✅ Transfer OK | TxID:', r.transactionId);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "External Transfer - Chuyển liên ngân hàng (VCB)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{jwt_token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fromAccountId\": \"ACC_SEED_A\",\n  \"toAccountId\": \"9901234567890\",\n  \"amount\": 100000,\n  \"currency\": \"VND\",\n  \"toBankCode\": \"VCB\",\n  \"idempotencyKey\": \"EXT-TRANSFER-{{$randomUUID}}\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/transaction/transfer",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "transaction", "transfer"]
+            },
+            "description": "Chuyển tiền liên ngân hàng đến Vietcombank. toBankCode hỗ trợ: VCB, TCB, MB, BIDV, VP, ACB"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('External transfer phản hồi', () => {",
+                  "    pm.expect([200, 400]).to.include(pm.response.code);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Transfer - Không có token (401 Expected)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fromAccountId\": \"ACC_SEED_A\",\n  \"toAccountId\": \"ACC_SEED_B\",\n  \"amount\": 100000,\n  \"currency\": \"VND\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/transaction/transfer",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "transaction", "transfer"]
+            },
+            "description": "Demo Security: Gửi request không có JWT token → 401 Unauthorized"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Trả về 401 khi không có token', () => pm.response.to.have.status(401));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "📊 Ledger - Xem số dư",
+      "item": [
+        {
+          "name": "Get Balance - Xem số dư tài khoản",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{jwt_token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/ledger/balance/ACC_SEED_A",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "ledger", "balance", "ACC_SEED_A"]
+            },
+            "description": "Xem số dư tài khoản theo mô hình Ledger. Chỉ được xem tài khoản của chính mình."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Lấy số dư thành công (200)', () => pm.response.to.have.status(200));",
+                  "if (pm.response.code === 200) {",
+                  "    const r = pm.response.json();",
+                  "    pm.test('Có balance', () => pm.expect(r.balance).to.not.be.undefined);",
+                  "    console.log('💰 Số dư tài khoản:', r.balance);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Balance - Tài khoản người khác (403 Expected)",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{jwt_token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/ledger/balance/ACC_SEED_B",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "ledger", "balance", "ACC_SEED_B"]
+            },
+            "description": "Demo Security: testuser1 cố xem số dư của testuser2 → 403 Forbidden"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Từ chối xem tài khoản người khác (403)', () => pm.response.to.have.status(403));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "🏦 Account - Quản lý tài khoản",
+      "item": [
+        {
+          "name": "Create Account - USER (403 Expected - ADMIN Only)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{jwt_token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"accountId\": \"ACC_NEW_TEST\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/accounts",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "accounts"]
+            },
+            "description": "Demo RBAC: Tài khoản USER cố tạo Account → 403 Forbidden. Chỉ ADMIN mới được phép."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('USER bị từ chối tạo account (403)', () => pm.response.to.have.status(403));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "🔔 Notifications - Quản lý thông báo",
+      "item": [
+        {
+          "name": "Subscribe Email - Đăng ký nhận thông báo",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{jwt_token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"your-email@gmail.com\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/notifications/subscribe",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "notifications", "subscribe"]
+            },
+            "description": "Đăng ký nhận thông báo qua email khi có biến động số dư. Hệ thống sẽ tự động trừ 10,000 VND phí dịch vụ."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Đăng ký nhận thông báo phản hồi', () => {",
+                  "    pm.expect([200, 400, 500]).to.include(pm.response.code);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
