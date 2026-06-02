@@ -9,7 +9,4 @@
 ![Docker](https://img.shields.io/badge/Docker-Ready-2496ED?style=for-the-badge&logo=docker&logoColor=white)
 
 **RESTful Banking API với Concurrency-Safe Transfer, Idempotency, JWT Auth, Rate Limiting**
-
-[📖 Swagger UI](http://localhost:8080/swagger-ui.html) · [📬 Postman Collection](#-postman-collection) · [🏗️ Architecture](#️-kiến-trúc-hệ-thống)
-
 </div>
