@@ -13,7 +13,7 @@
 
 ## 🚀 API Endpoints (Live Demo)
 
-Server đang được deploy tại: `http://51.20.79.190:8080`
+Server đã được deploy!!
 
 **Lưu ý:** Đối với các API yêu cầu xác thực, bạn cần thêm Header `Authorization: Bearer <jwt_token>` (Token lấy từ API Login/Register).
 
